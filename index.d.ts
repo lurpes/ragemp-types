@@ -3185,6 +3185,7 @@ declare interface Mp {
 	markers: MarkerMpPool;
 	objects: ObjectMpPool;
 	game: GameMp;
+	game1: GameMp;
 
 	Vector3: typeof Vector3;
 }
