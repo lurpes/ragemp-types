@@ -136,7 +136,7 @@ declare class Vector3 {
 	 *
 	 * @returns Normalized copy of a Vector3- one that has the same direction but with a magnitude of 1.
 	 */
-	unit(): Array3d;
+	unit(): Vector3;
 }
 
 declare interface DiscordMp {
@@ -973,8 +973,8 @@ declare interface IClientEvents {
 	click: (
 		absoluteX: number,
 		absoluteY: number,
-		upOrDown: string,
-		leftOrRight: string,
+		upOrDown: 'up' | 'down',
+		leftOrRight: 'left' | 'right',
 		relativeX: number,
 		relativeY: number,
 		worldPosition: Vector3,
@@ -1091,7 +1091,7 @@ declare interface EventMpPool {
 	 * @param procName The name of the procedure name you wish to call
 	 * @param args The arguments
 	 */
-	callRemoteProc(procName: string, ...args: any[]): Promise<any>;
+	callRemoteProc<T = any>(procName: string, ...args: any[]): Promise<T>;
 
 	callRemoteUnreliable(eventName: string, ...args: any[]): void;
 	cancelPendingRpc(procName?: string): void;
@@ -2139,6 +2139,14 @@ declare interface PedMp extends PedMpBase {
 	): void;
 	setFaceFeature(index: number, scale: number): void;
 	setAlpha(alphaLevel: number, skin?: boolean): void;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @returns boolean
+	 */
+	isPositionFrozen: boolean;
+
 }
 
 declare interface PedMpPool extends EntityMpPool<PedMp> {
@@ -2169,7 +2177,6 @@ declare interface PlayerMp extends PedMpBase {
 	readonly aimTarget: boolean;
 	readonly ip: string;
 	readonly isAiming: boolean;
-	readonly isClimbing: boolean;
 	readonly isEnteringVehicle: boolean;
 	readonly isInCover: boolean;
 	readonly isJumping: boolean;
@@ -2235,6 +2242,7 @@ declare interface PlayerMp extends PedMpBase {
 	hasTeleportFinished(): boolean;
 	hasUseScenarioTask(): boolean;
 	hideBloodDamageByZone(p1: any, p2: boolean): void;
+	isClimbing(): boolean;
 	isControlOn(): boolean;
 	isFreeAiming(): boolean;
 	isFreeForAmbientTask(): boolean;
@@ -2302,6 +2310,14 @@ declare interface PlayerMp extends PedMpBase {
 	): void;
 	taskVehicleShootAt(target: Handle, p2: number): void;
 	updateTaskSweepAim(entity: Handle): void;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @returns boolean
+	 */
+	isPositionFrozen: boolean;
+
 }
 
 declare interface PlayerMpPool extends EntityMpPool<PlayerMp> {
@@ -2575,6 +2591,7 @@ declare interface VehicleMp extends EntityMp {
 	setDoorsLockedForPlayer(player: Handle, toggle: boolean): void;
 	setDoorsLockedForTeam(team: number, toggle: boolean): void;
 	setDoorsShut(closeInstantly: boolean): void;
+	setDriftTyresEnabled(toggle: boolean): void;
 	setEngineCanDegrade(toggle: boolean): void;
 	setEngineHealth(health: number): void;
 	setEngineOn(value: boolean, instantly: boolean, otherwise: boolean): void;
@@ -2659,6 +2676,177 @@ declare interface VehicleMp extends EntityMp {
 	toggleMod(modType: number, toggle: boolean): void;
 	trackVisibility(): void;
 	wasCounterActivated(p0: any): boolean;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @returns boolean
+	 */
+	isPositionFrozen: boolean;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @returns number
+	 */
+	wheelCount: number;
+
+	 /**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @params wheelId
+	 * @returns number
+	 */
+	getWheelCamber(wheelId: number): number;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @params wheelId - use 255 to apply all wheel
+	 * @params value
+	 * 
+	 * @returns void
+	 */
+	setWheelCamber(wheelId: number, value: number): void;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @params wheelId - use 255 to apply all wheel
+	 * 
+	 * @returns number
+	 */
+	getWheelTrackWidth(wheelId: number): number;
+
+	 /**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @params wheelId - use 255 to apply all wheel
+	 * @params value
+	 * 
+	 * @returns void
+	 */
+	setWheelTrackWidth(wheelId: number, value: number): void;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @params wheelId
+	 * 
+	 * @returns number
+	 */
+	getWheelHeight(wheelId: number): number;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @params wheelId - use 255 to apply all wheel
+	 * @params value
+	 * 
+	 * @returns void
+	 */
+	setWheelHeight(wheelId: number, value: number): void;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @params wheelId
+	 * 
+	 * @returns number
+	 */
+	getTyreWidth(wheelId: number): number;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @params wheelId - use 255 to apply all wheel
+	 * @params value
+	 * 
+	 * @returns void
+	 */
+	setTyreWidth(wheelId: number, value: number): void;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @params wheelId
+	 * 
+	 * @returns number
+	 */
+	getTyreRadius(wheelId: number): number;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @params wheelId - use 255 to apply all wheel
+	 * @params value
+	 * 
+	 * @returns void
+	 */
+	setTyreRadius(wheelId: number, value: number): void;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @params wheelId
+	 * 
+	 * @returns number
+	 */
+	getRimRadius(wheelId: number): number;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @params wheelId - use 255 to apply all wheel
+	 * @params value
+	 * 
+	 * @returns void
+	 */
+	setRimRadius(wheelId: number, value: number): void;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * 
+	 * @returns number
+	 */
+	getWheelRadius(): number;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @params value
+	 * 
+	 * @returns void
+	 */
+	setWheelRadius(value: number): void;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * 
+	 * @returns number
+	 */
+	getWheelWidth(): number;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @params value
+	 * 
+	 * @returns void
+	 */
+	setWheelWidth(value: number): void;
+
+	/**
+	 * ⚠️ test branch: 10_test_oct22.
+	 *
+	 * @params height
+	 * 
+	 * @returns void
+	 */
+	setSuspensionHeight(height: number): void;
+
 }
 
 declare interface VehicleMpPool extends EntityMpPool<VehicleMp> {
@@ -3154,7 +3342,7 @@ declare interface ObjectMpPool extends EntityMpPool<ObjectMp> {
 	newWeaponObject(
 		weaponHash: number,
 		position: Vector3,
-		options?: { ammo?: number; scale?: number; showWorldObject?: boolean; rotation?: Vector3 }
+		options?: { ammo?: number; scale?: number; showWorldObject?: boolean; rotation?: Vector3; dimension?: number }
 	): ObjectMp;
 }
 

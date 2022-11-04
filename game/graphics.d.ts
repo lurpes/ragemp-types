@@ -132,7 +132,7 @@ declare interface GameGraphicsUnk {
 
 declare interface GameGraphicsLegacy {
 	setScreenDrawPosition(horizontalAlign: number, verticalAlign: number): void;
-	getScreenActiveResolution(): GetActiveScreenResolutionResult;
+	getScreenActiveResolution(x: number, y: number): GetActiveScreenResolutionResult;
 	getScreenAspectRatio(b: boolean): number;
 	setBlackout(state: boolean): void;
 	setFarShadowsSuppressed(toggle: boolean): void;
@@ -1224,10 +1224,10 @@ declare interface GameGraphics extends GameGraphicsLegacy {
 		text: string,
 		pos: Array2d | Array3d,
 		data?: {
-			font: number;
-			color: RGBA;
-			scale: Array2d;
-			outline: boolean;
+			font?: number;
+			color?: RGBA;
+			scale?: Array2d;
+			outline?: boolean;
 			centre?: boolean;
 		}
 	): void;
