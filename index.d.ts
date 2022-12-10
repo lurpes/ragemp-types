@@ -10,6 +10,111 @@ declare type Array3d = [number, number, number];
 declare type Array4d = [number, number, number, number];
 declare type RGB = Array3d;
 declare type RGBA = Array4d;
+declare type VoiceHandle = number; 
+
+interface VoiceFxChorus {
+	fWetDryMix: number;
+	fDepth: number;
+	fFeedback: number;
+	fFrequency: number;
+	lWaveform: number;
+	fDelay: number;
+	lPhase: RageEnums.Voice.BASSFXPhase;
+}
+
+interface VoiceFxCompressor {
+	fGain: number;
+	fAttack: number;
+	fRelease: number;
+	fThreshold: number;
+	fRatio: number;
+	fPredelay: number;
+}
+
+interface VoiceFxDistortion {
+	fGain: number;
+	fEdge: number;
+	fPostEQCenterFrequency: number;
+	fPostEQBandwidth: number;
+	fPreLowpassCutoff: number;
+}
+
+interface VoiceFxEcho {
+	fWetDryMix: number;
+	fFeedback: number;
+	fLeftDelay: number;
+	fRightDelay: number;
+	lPanDelay: number;
+}
+
+interface VoiceFxFlanger {
+	fWetDryMix: number;
+	fDepth: number;
+	fFeedback: number;
+	fFrequency: number;
+	lWaveform: number;
+	fDelay: number;
+	lPhase: RageEnums.Voice.BASSFXPhase;
+}
+
+interface VoiceFxGargle {
+	dwRateHz: number;
+	dwWaveShape: number;
+}
+
+interface VoiceFxI3DL2Reverb { 
+	lRoom: number;
+	lRoomHF: number;
+	flRoomRolloffFactor: number;
+	flDecayTime: number;
+	flDecayHFRatio: number;
+	lReflections: number;
+	flReflectionsDelay: number;
+	lReverb: number;
+	flReverbDelay: number;
+	flDiffusion: number;
+	flDensity: number;
+	flHFReference: number;
+}
+
+interface VoiceFxParamEq { 
+	fCenter: number;
+	fBandwidth: number;
+	fGain: number;
+}
+
+interface VoiceFxReverb {
+	fInGain: number;
+	fReverbMix: number;
+	fReverbTime: number;
+	fHighFreqRTRatio: number;
+}
+
+interface VoiceFxVolume {
+	fTarget: number;
+	fCurrent: number;
+	fTime: number;
+	lCurve: number;
+}
+
+interface VoiceFxPeakEq {
+	lBand: number;
+	fBandwidth: number;
+	fQ: number;
+	fCenter: number;
+	fGain: number;
+	lChannel: RageEnums.Voice.BASSFXChan;
+}
+
+interface VoiceFxBQF {
+	lFilter: number;
+	fCenter: number;
+	fGain: number;
+	fBandwidth: number;
+	fQ: number;
+	fS: number;
+	lChannel: RageEnums.Voice.BASSFXChan;
+}
 
 declare interface IVector3 {
 	x: number;
@@ -320,7 +425,7 @@ declare class EntityMp {
 	 * This property gets/sets the entity rotation.
 	 */
 	rotation: Vector3;
-	
+
 	applyForceTo(
 		forceType: number,
 		x: number,
@@ -887,6 +992,11 @@ declare interface RaycastingMp {
 	testPointToPoint(startPos: Vector3, endPos: Vector3, ignoreEntity?: EntityMp | EntityMp[], flags?: number | number[]): RaycastResult;
 
 	/**
+	 * Same as testPointToPoint but async
+	 */
+	testPointToPointAsync(startPos: Vector3, endPos: Vector3, ignoreEntity?: EntityMp | EntityMp[], flags?: number | number[]): Promise<RaycastResult>;
+
+	/**
 	 * Raycast from point to point, where the ray has a radius.
 	 */
 	testCapsule(startPos: Vector3, endPos: Vector3, radius: number, ignoreEntity?: EntityMp | EntityMp[], flags?: number | number[]): RaycastResult;
@@ -1021,6 +1131,8 @@ declare interface IClientEvents {
 	playerReachWaypoint: (player: PlayerMp) => void;
 	playerEnterColshape: (shape: ColshapeMp) => void;
 	playerExitColshape: (shape: ColshapeMp) => void;
+	explosion: (sourcePlayer: PlayerMp, type: RageEnums.Explosions, position: Vector3) => boolean;
+	projectile: (sourcePlayer: PlayerMp, weaponHash: number, ammoType: number, position: Vector3, direction: Vector3) => boolean;
 }
 
 declare class EventMp {
@@ -1977,7 +2089,7 @@ declare interface PedMpBase extends EntityMp {
 	taskRappelFromHeli(p1: number): void;
 	taskReactAndFlee(fleeTarget: Handle): void;
 	taskReloadWeapon(doReload: boolean): void;
-	taskScriptedAnimation(p1: any, p2: any, p3: any, p4: number, p5: number): void;
+	taskScriptedAnimation(lowData: number, midData: number, highData: number, blendIn: number, blendOut: number): void;
 	taskSeekCoverFrom(target: Handle, duration: number, p3: boolean): void;
 	taskSeekCoverToCoords(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, p7: any, p8: boolean): void;
 	taskSetBlockingOfNonTemporaryEvents(toggle: boolean): void;
@@ -2141,8 +2253,6 @@ declare interface PedMp extends PedMpBase {
 	setAlpha(alphaLevel: number, skin?: boolean): void;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
 	 * @returns boolean
 	 */
 	isPositionFrozen: boolean;
@@ -2153,7 +2263,7 @@ declare interface PedMpPool extends EntityMpPool<PedMp> {
 	'new'(model: RageEnums.Hashes.Ped | Hash, position: Vector3, heading: number, dimension?: number): PedMp;
 }
 
-declare interface PickupMp extends EntityMp {}
+declare interface PickupMp extends EntityMp { }
 
 declare interface PickupMpPool extends EntityMpPool<PickupMp> {
 	'new'(...args: any[]): PickupMp;
@@ -2311,13 +2421,33 @@ declare interface PlayerMp extends PedMpBase {
 	taskVehicleShootAt(target: Handle, p2: number): void;
 	updateTaskSweepAim(entity: Handle): void;
 
+	getCurrentScriptedAnim(): string;
+	getCurrentScenarioId(): number;
+	
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
+
 	 * @returns boolean
 	 */
 	isPositionFrozen: boolean;
-
+	
+	/**
+	 * https://wiki.rage.mp/index.php?title=Player::setVoiceFx
+	 */
+	setVoiceFx(fxType: RageEnums.Voice.BASSFXType, priority: number): void;
+	removeVoiceFx(fxHandle: VoiceHandle): void;
+	resetVoiceFx(fxHandle: VoiceHandle): void;
+	setVoiceFxChorus(fxHandle: VoiceHandle, { fWetDryMix, fDepth, fFeedback, fFrequency, lWaveform, fDelay, lPhase }: VoiceFxChorus): void;
+	setVoiceFxCompressor(fxHandle: VoiceHandle, { fGain, fAttack, fRelease, fThreshold, fRatio, fPredelay }: VoiceFxCompressor): void;
+	setVoiceFxDistortion(fxHandle: VoiceHandle, { fGain, fEdge, fPostEQCenterFrequency, fPostEQBandwidth, fPreLowpassCutoff }: VoiceFxDistortion): void;
+	setVoiceFxEcho(fxHandle: VoiceHandle, { fWetDryMix, fFeedback, fLeftDelay, fRightDelay, lPanDelay }: VoiceFxEcho): void;
+	setVoiceFxFlanger(fxHandle: VoiceHandle, { fWetDryMix, fDepth, fFeedback, fFrequency, lWaveform, fDelay, lPhase }: VoiceFxFlanger): void;
+	setVoiceFxGargle(fxHandle: VoiceHandle, { dwRateHz, dwWaveShape }: VoiceFxGargle): void;
+	setVoiceFxI3DL2Reverb(fxHandle: VoiceHandle, { lRoom, lRoomHF, flRoomRolloffFactor, flDecayTime, flDecayHFRatio, lReflections, flReflectionsDelay, lReverb, flReverbDelay, flDiffusion, flDensity, flHFReference }: VoiceFxI3DL2Reverb): void;
+	setVoiceFxParamEq(fxHandle: VoiceHandle, { fCenter, fBandwidth, fGain }: VoiceFxParamEq): void;
+	setVoiceFxReverb(fxHandle: VoiceHandle, { fInGain, fReverbMix, fReverbTime, fHighFreqRTRatio }: VoiceFxReverb): void;
+	setVoiceFxVolume(fxHandle: VoiceHandle, { fTarget, fCurrent, fTime, lCurve }: VoiceFxVolume): void;
+	setVoiceFxPeakEq(fxHandle: VoiceHandle, { lBand, fBandwidth, fQ, fCenter, fGain, lChannel }: VoiceFxPeakEq): void;
+	setVoiceFxBQF(fxHandle: VoiceHandle, { lFilter, fCenter, fGain, fBandwidth, fQ, fS, lChannel }: VoiceFxBQF): void;
 }
 
 declare interface PlayerMpPool extends EntityMpPool<PlayerMp> {
@@ -2678,30 +2808,24 @@ declare interface VehicleMp extends EntityMp {
 	wasCounterActivated(p0: any): boolean;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
+
 	 * @returns boolean
 	 */
 	isPositionFrozen: boolean;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
 	 * @returns number
 	 */
 	wheelCount: number;
 
-	 /**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
-	 * @params wheelId
-	 * @returns number
-	 */
+	/**
+	* @params wheelId
+	* @returns number
+	*/
 	getWheelCamber(wheelId: number): number;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
+
 	 * @params wheelId - use 255 to apply all wheel
 	 * @params value
 	 * 
@@ -2710,27 +2834,24 @@ declare interface VehicleMp extends EntityMp {
 	setWheelCamber(wheelId: number, value: number): void;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
+
 	 * @params wheelId - use 255 to apply all wheel
 	 * 
 	 * @returns number
 	 */
 	getWheelTrackWidth(wheelId: number): number;
 
-	 /**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
-	 * @params wheelId - use 255 to apply all wheel
-	 * @params value
-	 * 
-	 * @returns void
-	 */
+	/**
+	
+	* @params wheelId - use 255 to apply all wheel
+	* @params value
+	* 
+	* @returns void
+	*/
 	setWheelTrackWidth(wheelId: number, value: number): void;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
+
 	 * @params wheelId
 	 * 
 	 * @returns number
@@ -2738,8 +2859,7 @@ declare interface VehicleMp extends EntityMp {
 	getWheelHeight(wheelId: number): number;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
+
 	 * @params wheelId - use 255 to apply all wheel
 	 * @params value
 	 * 
@@ -2748,8 +2868,7 @@ declare interface VehicleMp extends EntityMp {
 	setWheelHeight(wheelId: number, value: number): void;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
+
 	 * @params wheelId
 	 * 
 	 * @returns number
@@ -2757,8 +2876,7 @@ declare interface VehicleMp extends EntityMp {
 	getTyreWidth(wheelId: number): number;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
+
 	 * @params wheelId - use 255 to apply all wheel
 	 * @params value
 	 * 
@@ -2767,8 +2885,7 @@ declare interface VehicleMp extends EntityMp {
 	setTyreWidth(wheelId: number, value: number): void;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
+
 	 * @params wheelId
 	 * 
 	 * @returns number
@@ -2776,8 +2893,7 @@ declare interface VehicleMp extends EntityMp {
 	getTyreRadius(wheelId: number): number;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
+
 	 * @params wheelId - use 255 to apply all wheel
 	 * @params value
 	 * 
@@ -2786,8 +2902,7 @@ declare interface VehicleMp extends EntityMp {
 	setTyreRadius(wheelId: number, value: number): void;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
+
 	 * @params wheelId
 	 * 
 	 * @returns number
@@ -2795,8 +2910,7 @@ declare interface VehicleMp extends EntityMp {
 	getRimRadius(wheelId: number): number;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
+
 	 * @params wheelId - use 255 to apply all wheel
 	 * @params value
 	 * 
@@ -2805,16 +2919,14 @@ declare interface VehicleMp extends EntityMp {
 	setRimRadius(wheelId: number, value: number): void;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
+
 	 * 
 	 * @returns number
 	 */
 	getWheelRadius(): number;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
+
 	 * @params value
 	 * 
 	 * @returns void
@@ -2822,16 +2934,14 @@ declare interface VehicleMp extends EntityMp {
 	setWheelRadius(value: number): void;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
+
 	 * 
 	 * @returns number
 	 */
 	getWheelWidth(): number;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
+
 	 * @params value
 	 * 
 	 * @returns void
@@ -2839,8 +2949,7 @@ declare interface VehicleMp extends EntityMp {
 	setWheelWidth(value: number): void;
 
 	/**
-	 * ⚠️ test branch: 10_test_oct22.
-	 *
+
 	 * @params height
 	 * 
 	 * @returns void
